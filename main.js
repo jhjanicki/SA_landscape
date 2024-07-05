@@ -141,7 +141,7 @@ function handleStepEnter(response) {
             g.selectAll("path").style("opacity", 0)
             g.selectAll("rect").style("opacity", 0)
 
-            textG.selectAll("text").style("opacity", 0)
+            svg.selectAll("text").style("opacity", 0)
 
 
         }
