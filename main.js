@@ -1,3 +1,23 @@
+const windowWidth = $(window).width();
+const windowHeight = $(window).height();
+
+$(window).resize(function () {
+  if (
+    windowWidth != $(window).width() ||
+    windowHeight != $(window).height()
+  ) {
+    location.reload();
+    return;
+  }
+});
+
+let isSmallScreen = false;
+
+if (windowWidth <= 550) {
+  isSmallScreen = true;
+}
+
+
 const main = d3.select("body");
 const scrolly = d3.selectAll(".scroller");
 const figure = d3.selectAll(".chart");
@@ -9,7 +29,7 @@ const scroller = scrollama();
 
 
 // console.log(figure.node().getBoundingClientRect())
-let width = figure.node().getBoundingClientRect().width;
+let width = isSmallScreen?350:figure.node().getBoundingClientRect().width;
 let height = figure.node().getBoundingClientRect().height;
 
 
@@ -32,7 +52,7 @@ const bg = svg.append('rect')
     .attr("opacity", 0.3)
 
 
-
+// barData
 
 const barData = [{
         "category": "Net zero",
@@ -96,8 +116,6 @@ const stack = d3.stack()
 
 const series = stack(stackedData);
 
-console.log(series)
-
 
 
 let xAxis = d3.axisBottom(x).ticks(10);
@@ -107,8 +125,10 @@ let yAxis = d3.axisLeft(y).ticks(5);
 
 const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 const gImage = svg.append("g");
+let gText = svg.append("g").attr("id", "text").raise()
+const gMap = svg.append("g");
 
-
+//IMAGE
 
 gImage.append("image")
     .attr("id", "sankey")
@@ -121,10 +141,159 @@ gImage.append("image")
     .attr("preserveAspectRatio", "xMidYMid meet");
 
 
-let textG = svg.append("g").attr("id", "text").raise()
+
+// MAP
+
+const mapData = [{"region":"Central Asia and Eastern Europe","value":0.22,"lat":49,"lon":60},{"region":"East Asia and Pacific","value":1.18,"lat":0,"lon":140},{"region":"Latin America & Caribbean","value":0.23,"lat":-15,"lon":-60},{"region":"Middle East and North Africa","value":0.71,"lat":25,"lon":30},{"region":"Other Oceania","value":0.05,"lat":-15,"lon":170},{"region":"South Asia","value":0.19,"lat":20,"lon":80},{"region":"Sub-Saharan Africa","value":0.41,"lat":-5,"lon":20},{"region":"Transregional","value":0.93,"lat":-50,"lon":20},{"region":"US & Canada","value":0.78,"lat":54,"lon":-100},{"region":"Western Europe","value":7.23,"lat":50,"lon":10}]
+
+function loadJSON(filePath) {
+            const request = new XMLHttpRequest();
+            request.open("GET", filePath, false); // `false` makes the request synchronous
+            request.send(null); //method sends the request to the server, null is passed as an argument because GET requests do not have a body
+            if (request.status === 200) {
+                return JSON.parse(request.responseText);
+            }
+        }
+
+const worldmap = loadJSON("./data/land.geojson");
+
+const projection = d3.geoNaturalEarth1()
+projection.fitSize([width, height+100], worldmap);
+const path = d3.geoPath()
+    .projection(projection);
+
+const circleScale = d3.scaleLinear().domain([0.1,10]).range([5,50]);
+
+g.append("g")
+    .attr("class", "y-axis")
+    .call(yAxis)
+    .style("opacity",0)
+
+g.append("g")
+    .attr("class", "x-axis")
+    .attr("transform", `translate(0,${height})`)
+    .call(xAxis)
+    .style("opacity",0)
+
+g.selectAll(".x-axis").selectAll(".tick").selectAll("text").style("font-size",16)
+
+g.append("text")
+    .attr("id","unit")
+    .attr("x",x(0)+30)
+    .attr("y",y(0)+20)
+    .text("(In billion p.a.)")
+    .style("opacity",0)
 
 
+gMap.selectAll("path.land")
+            .data(worldmap.features)
+            .join("path")
+            .attr("d", path)
+            .attr("class", "land")
+            .attr("fill", "#e9c67f")
+            // .attr("stroke", "#808080")
+            .style("opacity",0)
 
+gMap.selectAll("circle.mapPoints")
+      .data(mapData)
+      .join("circle")
+      .attr("class","mapPoints")
+      .attr("cx",d=>projection([+d.lon, +d.lat])[0])
+      .attr("cy",d=>projection([+d.lon, +d.lat])[1])
+      .attr("r", d=>circleScale(d.value))
+      .attr("fill", "#266fa5")
+      .style("opacity",0)
+
+gMap.selectAll("text.mapText")
+      .data(mapData)
+      .join("text")
+      .attr("class","mapText")
+      .attr("x",d=>projection([+d.lon, +d.lat])[0])
+      .attr("y",d=>projection([+d.lon, +d.lat])[1])
+      .attr("fill", "black")
+      .style("font-size",14)
+      .text(d=>d.region)
+      .style("opacity",0)
+
+  gMap.selectAll("text.mapTextVal")
+        .data(mapData)
+        .join("text")
+        .attr("class","mapTextVal")
+        .attr("x",d=>projection([+d.lon, +d.lat])[0])
+        .attr("y",d=>projection([+d.lon, +d.lat])[1]+20)
+        .attr("fill", "black")
+        .style("font-weight",700)
+        .text(d=>d.region === "Transregional"?`${d.value} billion p.a.`:d.value)
+        .style("opacity",0)
+
+
+let barCalled = false;
+let bar2Called = false;
+
+function drawBars(){
+
+  barCalled = true;
+  g.select("#unit").style("opacity", 1)
+  g.append("g")
+      .selectAll("g.rects")
+      .data(series)
+      .join("g")
+      .attr("class", "rects")
+      .attr("fill", d => color(d.key))
+      .attr("class", d => `layer layer-${d.key}`)
+      .selectAll("rect")
+      .data(d => d)
+      .join("rect")
+      .attr("x", d => x(d.data.category))
+      .attr("y", height) // Initially draw all rects at the bottom
+      .attr("height", 0) // with height 0
+      .attr("width", x.bandwidth())
+      .attr("class", "bar")
+      .style("opacity", 1)
+
+  // Initially animate only the first subcategory
+  g.selectAll(".layer-current .bar")
+      .style("opacity", 1)
+      .transition()
+      .duration(300)
+      .attr("y", d => y(d[1]))
+      .attr("height", d => y(d[0]) - y(d[1]))
+      .on("end", function() {
+          gText.selectAll("text.current")
+              .data(currentData)
+              .join("text")
+              .attr("class", "current")
+              .attr("x", d => x(d.category) + x.bandwidth() / 2 + margin.left)
+              .attr("y", d => y(d.value) + 50)
+              .attr("text-anchor", "middle")
+              .text(d => d.value)
+              .attr("fill", "white")
+              .style("opacity", 1)
+      })
+}
+
+function drawBars2(){
+
+  bar2Called = true;
+  g.select("#unit").style("opacity", 1)
+  g.selectAll(`.layer-needs .bar`)
+      .attr("y", d => y(d[0])) // Set y to the base of the previous stack
+      .transition()
+      .duration(300)
+      .attr("height", d => y(d[0]) - y(d[1])) // Animate the height
+      .attr("y", d => y(d[1])) // Animate y to the correct position
+      .on("end", function() {
+          gText.selectAll("text.needs")
+              .data(needsData)
+              .join("text")
+              .attr("class", "needs")
+              .attr("x", d => x(d.category) + x.bandwidth() / 2 + margin.left)
+              .attr("y", d => y(d.value))
+              .attr("text-anchor", "middle")
+              .text(d => d.value)
+              .style("opacity", 1)
+      })
+}
 
 // scrollama event handlers
 function handleStepEnter(response) {
@@ -135,12 +304,12 @@ function handleStepEnter(response) {
 
             gImage.select("#sankey")
                 .transition()
-                .duration(500)
+                .duration(300)
                 .style("opacity", 1)
 
             g.selectAll("path").style("opacity", 0)
             g.selectAll("rect").style("opacity", 0)
-
+            g.select("#unit").style("opacity", 0)
             svg.selectAll("text").style("opacity", 0)
 
 
@@ -151,58 +320,17 @@ function handleStepEnter(response) {
 
         if (response.direction == "down") {
 
+          g.select(".x-axis").style("opacity",1)
+          g.select(".y-axis").style("opacity",1)
+          g.selectAll("path").style("opacity", 1)
+          g.selectAll("text").style("opacity", 1)
+
             gImage.select("#sankey")
                 .transition()
-                .duration(500)
+                .duration(300)
                 .style("opacity", 0)
 
-            g.append("g")
-                .attr("class", "y-axis")
-                .call(yAxis);
-
-            g.append("g")
-                .attr("class", "x-axis")
-                .attr("transform", `translate(0,${height})`)
-                .call(xAxis);
-
-
-
-            g.append("g")
-                .selectAll("g.rects")
-                .data(series)
-                .join("g")
-                .attr("class", "rects")
-                .attr("fill", d => color(d.key))
-                .attr("class", d => `layer layer-${d.key}`)
-                .selectAll("rect")
-                .data(d => d)
-                .join("rect")
-                .attr("x", d => x(d.data.category))
-                .attr("y", height) // Initially draw all rects at the bottom
-                .attr("height", 0) // with height 0
-                .attr("width", x.bandwidth())
-                .attr("class", "bar")
-                .style("opacity", 1)
-
-            // Initially animate only the first subcategory
-            g.selectAll(".layer-current .bar")
-                .style("opacity", 1)
-                .transition()
-                .duration(1000)
-                .attr("y", d => y(d[1]))
-                .attr("height", d => y(d[0]) - y(d[1]))
-                .on("end", function() {
-                    textG.selectAll("text.current")
-                        .data(currentData)
-                        .join("text")
-                        .attr("class", "current")
-                        .attr("x", d => x(d.category) + x.bandwidth() / 2 + margin.left)
-                        .attr("y", d => y(d.value) + 50)
-                        .attr("text-anchor", "middle")
-                        .text(d => d.value)
-                        .attr("fill", "white")
-                        .style("opacity", 1)
-                })
+            drawBars();
 
 
 
@@ -211,7 +339,15 @@ function handleStepEnter(response) {
 
 
         if (response.direction == "up") {
+          g.selectAll(`.layer-needs .bar`)
+              .attr("y", d => y(d[1])) // Set y to the base of the previous stack
+              .transition()
+              .duration(300)
+              .attr("height", 0) // Animate the height
+              .attr("y", d => y(d[0]))
 
+
+          svg.selectAll("text.needs").style("opacity", 0)
 
 
         }
@@ -223,27 +359,34 @@ function handleStepEnter(response) {
 
         if (response.direction == "down") {
 
-            g.selectAll(`.layer-needs .bar`)
-                .attr("y", d => y(d[0])) // Set y to the base of the previous stack
-                .transition()
-                .duration(1000)
-                .attr("height", d => y(d[0]) - y(d[1])) // Animate the height
-                .attr("y", d => y(d[1])) // Animate y to the correct position
-                .on("end", function() {
-                    textG.selectAll("text.needs")
-                        .data(needsData)
-                        .join("text")
-                        .attr("class", "needs")
-                        .attr("x", d => x(d.category) + x.bandwidth() / 2 + margin.left)
-                        .attr("y", d => y(d.value))
-                        .attr("text-anchor", "middle")
-                        .text(d => d.value)
-                        .style("opacity", 1)
-                })
+            if(!barCalled){
+              drawBars()
+            }
+
+            // g.selectAll(`.layer-needs .bar`).style("opacity",1)
+            drawBars2()
+            gImage.select("#sankey").style("opacity", 0)
+            g.selectAll("path").style("opacity", 1)
+            g.selectAll("rect").style("opacity", 1)
+            g.select(".x-axis").style("opacity",1)
+            g.select(".y-axis").style("opacity",1)
 
 
+        }
+
+        if (response.direction == "up") {
 
 
+          g.selectAll("path").style("opacity", 1)
+          g.selectAll("rect").style("opacity", 1)
+          svg.selectAll("text").style("opacity", 1)
+          g.select(".x-axis").style("opacity",1)
+          g.select(".y-axis").style("opacity",1)
+
+          gMap.selectAll(".land").transition().duration(300).style("opacity",0)
+          gMap.selectAll(".mapText").style("opacity",0)
+          gMap.selectAll(".mapTextVal").style("opacity",0)
+          gMap.selectAll(".mapPoints").transition().duration(300).style("opacity",0)
         }
 
 
@@ -253,6 +396,32 @@ function handleStepEnter(response) {
     if (response.index == 3) {
 
         if (response.direction == "down") {
+          if(!barCalled){
+            drawBars()
+          }
+
+          if(!bar2Called){
+            drawBars2()
+          }
+          gMap.selectAll(".land").transition().duration(300).style("opacity",1)
+          gMap.selectAll(".mapPoints").attr("r",0).transition().duration(500).style("opacity",1).attr("r",d=>circleScale(d.value))
+
+          svg.selectAll("text").style("opacity",0)
+          gMap.selectAll(".mapText").transition().duration(300).style("opacity",isSmallScreen?0:1)
+          gMap.selectAll(".mapTextVal").transition().duration(300).style("opacity",isSmallScreen?0:1)
+
+          g.selectAll("path").style("opacity", 0)
+          g.selectAll("rect").style("opacity", 0)
+          g.select(".x-axis").style("opacity",0)
+          g.select(".y-axis").style("opacity",0)
+          g.select("#unit").style("opacity", 0)
+
+          gImage.select("#sankey").style("opacity", 0)
+
+
+
+
+
 
 
 
