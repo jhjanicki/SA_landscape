@@ -233,7 +233,7 @@ let bar2Called = false;
 function drawBars(){
 
   barCalled = true;
-  g.select("#unit").style("opacity", 1)
+  g.select("#unit").style("opacity", isSmallScreen?0:1)
   g.append("g")
       .selectAll("g.rects")
       .data(series)
@@ -275,7 +275,7 @@ function drawBars(){
 function drawBars2(){
 
   bar2Called = true;
-  g.select("#unit").style("opacity", 1)
+  g.select("#unit").style("opacity", isSmallScreen?0:1)
   g.selectAll(`.layer-needs .bar`)
       .attr("y", d => y(d[0])) // Set y to the base of the previous stack
       .transition()
@@ -291,7 +291,7 @@ function drawBars2(){
               .attr("y", d => y(d.value))
               .attr("text-anchor", "middle")
               .text(d => d.value)
-              .style("opacity", 1)
+              .style("opacity", isSmallScreen?0:1)
       })
 }
 
@@ -365,6 +365,11 @@ function handleStepEnter(response) {
 
             // g.selectAll(`.layer-needs .bar`).style("opacity",1)
             drawBars2()
+            if(isSmallScreen){
+              setTimeout(function() {
+                gText.selectAll("text.needs").style("opacity",1).raise()
+              }, 350);
+            }
             gImage.select("#sankey").style("opacity", 0)
             g.selectAll("path").style("opacity", 1)
             g.selectAll("rect").style("opacity", 1)
@@ -376,12 +381,16 @@ function handleStepEnter(response) {
 
         if (response.direction == "up") {
 
+         if(isSmallScreen){
+           gText.selectAll("text.needs").style("opacity",1)
+         }
 
           g.selectAll("path").style("opacity", 1)
           g.selectAll("rect").style("opacity", 1)
           svg.selectAll("text").style("opacity", 1)
           g.select(".x-axis").style("opacity",1)
           g.select(".y-axis").style("opacity",1)
+          g.select("#unit").style("opacity", isSmallScreen?0:1)
 
           gMap.selectAll(".land").transition().duration(300).style("opacity",0)
           gMap.selectAll(".mapText").style("opacity",0)
@@ -403,12 +412,13 @@ function handleStepEnter(response) {
           if(!bar2Called){
             drawBars2()
           }
+
           gMap.selectAll(".land").transition().duration(300).style("opacity",1)
           gMap.selectAll(".mapPoints").attr("r",0).transition().duration(500).style("opacity",1).attr("r",d=>circleScale(d.value))
 
           svg.selectAll("text").style("opacity",0)
           gMap.selectAll(".mapText").transition().duration(300).style("opacity",isSmallScreen?0:1)
-          gMap.selectAll(".mapTextVal").transition().duration(300).style("opacity",isSmallScreen?0:1)
+          gMap.selectAll(".mapTextVal").transition().duration(300).style("opacity",1)
 
           g.selectAll("path").style("opacity", 0)
           g.selectAll("rect").style("opacity", 0)
@@ -418,14 +428,8 @@ function handleStepEnter(response) {
 
           gImage.select("#sankey").style("opacity", 0)
 
-
-
-
-
-
-
-
         }
+
 
     }
 
