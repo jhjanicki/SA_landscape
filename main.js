@@ -189,7 +189,7 @@ g.selectAll(".x-axis").selectAll(".tick").selectAll("text").style("font-size",16
 
 g.append("text")
     .attr("id","unit")
-    .attr("x",x(0)+30)
+    .attr("x",0)
     .attr("y",y(0)+20)
     .text("(In billion p.a.)")
     .style("opacity",0)
