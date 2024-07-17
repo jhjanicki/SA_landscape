@@ -29,17 +29,26 @@ const scroller = scrollama();
 
 
 // console.log(figure.node().getBoundingClientRect())
-let width = isSmallScreen?350:figure.node().getBoundingClientRect().width;
+let width = figure.node().getBoundingClientRect().width;
 let height = figure.node().getBoundingClientRect().height;
 
 
-const margin = {
+let margin = {
     "top": 35,
     "left": 55,
     "bottom": 65,
     "right": 30
 }
 
+if (windowWidth <= 550) {
+     margin = {
+        "top": 15,
+        "left": 35,
+        "bottom": 25,
+        "right": 10
+    }
+  }
+  
 
 //svg
 const svg = d3.select("#chart1").append("svg").attr("width", width + margin.left + margin.right).attr("height", height + margin.top + margin.bottom);
@@ -48,7 +57,7 @@ const bg = svg.append('rect')
     .attr("height", height + margin.top + margin.bottom)
     .attr("x", 0)
     .attr("y", 0)
-    .attr("fill", "#E7E6E6")
+    .attr("fill", "none")
     .attr("opacity", 0.3)
 
 
@@ -156,6 +165,7 @@ function loadJSON(filePath) {
         }
 
 const worldmap = loadJSON("./data/land.geojson");
+const SAMap = loadJSON("./data/south-africa.geojson");
 
 const projection = d3.geoNaturalEarth1()
 projection.fitSize([width, height+100], worldmap);
@@ -190,8 +200,15 @@ gMap.selectAll("path.land")
             .join("path")
             .attr("d", path)
             .attr("class", "land")
-            .attr("fill", "#e9c67f")
-            // .attr("stroke", "#808080")
+            .attr("fill", "#e5e4e3")
+            .style("opacity",0)
+
+gMap.selectAll("path.SA")
+            .data(SAMap.features)
+            .join("path")
+            .attr("d", path)
+            .attr("class", "SA")
+            .attr("fill", "#7da9c9")
             .style("opacity",0)
 
 gMap.selectAll("circle.mapPoints")
@@ -201,7 +218,7 @@ gMap.selectAll("circle.mapPoints")
       .attr("cx",d=>projection([+d.lon, +d.lat])[0])
       .attr("cy",d=>projection([+d.lon, +d.lat])[1])
       .attr("r", d=>circleScale(d.value))
-      .attr("fill", "#266fa5")
+      .attr("fill", "#7da9c9")
       .style("opacity",0)
 
 gMap.selectAll("text.mapText")
@@ -264,11 +281,13 @@ function drawBars(){
               .join("text")
               .attr("class", "current")
               .attr("x", d => x(d.category) + x.bandwidth() / 2 + margin.left)
-              .attr("y", d => y(d.value) + 50)
+              .attr("y", d => y(d.value/2)+margin.top)
               .attr("text-anchor", "middle")
               .text(d => d.value)
-              .attr("fill", "white")
               .style("opacity", 1)
+              .style("font-size",20)
+              .style("font-weight",700)
+              .attr("fill","white")
       })
 }
 
@@ -288,10 +307,13 @@ function drawBars2(){
               .join("text")
               .attr("class", "needs")
               .attr("x", d => x(d.category) + x.bandwidth() / 2 + margin.left)
-              .attr("y", d => y(d.value))
+              .attr("y", d => y(d.value/2+131)+margin.top)
               .attr("text-anchor", "middle")
               .text(d => d.value)
               .style("opacity", isSmallScreen?0:1)
+              .style("font-size",20)
+              .style("font-weight",700)
+              .attr("fill","white")
       })
 }
 
@@ -391,7 +413,8 @@ function handleStepEnter(response) {
           g.select(".x-axis").style("opacity",1)
           g.select(".y-axis").style("opacity",1)
           g.select("#unit").style("opacity", isSmallScreen?0:1)
-
+          
+          gMap.selectAll(".SA").style("opacity",0)
           gMap.selectAll(".land").transition().duration(300).style("opacity",0)
           gMap.selectAll(".mapText").style("opacity",0)
           gMap.selectAll(".mapTextVal").style("opacity",0)
@@ -414,18 +437,54 @@ function handleStepEnter(response) {
           }
 
           gMap.selectAll(".land").transition().duration(300).style("opacity",1)
-          gMap.selectAll(".mapPoints").attr("r",0).transition().duration(500).style("opacity",1).attr("r",d=>circleScale(d.value))
-
+          gMap.selectAll(".SA").style("opacity",1)
           svg.selectAll("text").style("opacity",0)
-          gMap.selectAll(".mapText").transition().duration(300).style("opacity",isSmallScreen?0:1)
-          gMap.selectAll(".mapTextVal").transition().duration(300).style("opacity",1)
 
           g.selectAll("path").style("opacity", 0)
           g.selectAll("rect").style("opacity", 0)
           g.select(".x-axis").style("opacity",0)
           g.select(".y-axis").style("opacity",0)
           g.select("#unit").style("opacity", 0)
+          gImage.select("#sankey").style("opacity", 0)
 
+        }
+
+        if (response.direction == "up") {
+            gMap.selectAll(".SA").style("opacity",1)
+            gMap.selectAll(".mapPoints").style("opacity",0)
+            svg.selectAll("text").style("opacity",0)
+            gMap.selectAll(".mapText").style("opacity",0)
+            gMap.selectAll(".mapTextVal").style("opacity",0)
+  
+
+        }
+
+
+    }
+
+
+    if (response.index == 4) {
+
+        if (response.direction == "down") {
+          if(!barCalled){
+            drawBars()
+          }
+
+          if(!bar2Called){
+            drawBars2()
+          }
+
+          gMap.selectAll(".land").style("opacity",1)
+          gMap.selectAll(".SA").style("opacity",0)
+          gMap.selectAll(".mapPoints").attr("r",0).transition().duration(500).style("opacity",1).attr("r",d=>circleScale(d.value))
+          svg.selectAll("text").style("opacity",0)
+          gMap.selectAll(".mapText").transition().duration(300).style("opacity",windowWidth <= 750?0:1)
+          gMap.selectAll(".mapTextVal").transition().duration(300).style("opacity",1)
+          g.selectAll("path").style("opacity", 0)
+          g.selectAll("rect").style("opacity", 0)
+          g.select(".x-axis").style("opacity",0)
+          g.select(".y-axis").style("opacity",0)
+          g.select("#unit").style("opacity", 0)
           gImage.select("#sankey").style("opacity", 0)
 
         }
