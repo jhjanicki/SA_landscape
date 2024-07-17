@@ -46,7 +46,7 @@ section.section-1 h3 {
 }
 
 .title {
-	font-family: 'Georgia';
+	font-family: 'Whitney';
 	position: relative;
 	max-width: 60%;
 	margin-left: auto;
@@ -69,7 +69,7 @@ section.section-1 h3 {
 }
 
 .article-wrapper p {
-	font-family: 'Georgia';
+	font-family: 'Whitney';
 	padding: 0;
 	font-size: 20px;
 	line-height: 28px;
@@ -123,7 +123,8 @@ body {
 
 .chart-wrapper .chart {
 	height: 450px;
-	width: 100%
+	width: 100%;
+	margin-left: -50px;
 }
 
 .article-wrapper.scroller-text {
@@ -138,6 +139,13 @@ body {
 
 .img-responsive {
 	width: 100%;
+}
+
+#chart1{
+	width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
 }
 
 #main {
@@ -160,7 +168,7 @@ body {
 	font-family: 'Whitney';
 }
 
-@media only screen and (min-width:661px) and (max-width:920px) {
+/* @media only screen and (min-width:661px) and (max-width:920px) {
 	section.section-1 h1 {
 		font-size: 36px;
 		top: 5vh;
@@ -175,7 +183,10 @@ body {
 	.subtitle {
 		max-width: 50%;
 	}
-}
+	.chart-wrapper {
+		max-width: 500px;
+	}
+} */
 
 @media only screen and (max-width:660px) {
 	section.section-1 h1 {
@@ -199,8 +210,28 @@ body {
 		max-width: 90vw
 	}
     .scene {
-		min-height: 200vh
+		min-height: 100vh
 	}
+
+	.chart-wrapper .chart {
+		margin-left: 0px;
+	}
+
+	.chart-wrapper {
+		margin: 0px auto;
+	}
+
+	.scroll-graphic{
+		padding-top:50px;
+	}
+}
+
+@media only screen and (max-width:660px) {
+	.scroll-graphic{
+		width:80%;
+		margin-left:5%;
+	}
+
 }
 
 
