@@ -64,23 +64,25 @@ const bg = svg.append('rect')
 // barData
 
 const barData = [{
-        "category": "Net zero",
+        "category": "Net zero by 2050",
         "subcategory": "current",
         "value": 131
     }, {
-        "category": "Net zero",
+        "category": "Net zero by 2050",
         "subcategory": "needs",
-        "value": 203
+        "value": 203,
+        "total":334
     },
     {
-        "category": "NDC",
+        "category": "NDC by 2030",
         "subcategory": "current",
         "value": 131
     },
     {
-        "category": "NDC",
+        "category": "NDC by 2030",
         "subcategory": "needs",
-        "value": 404
+        "value": 404,
+        "total": 535
     }
 ]
 
@@ -155,8 +157,10 @@ const yAxisArea = d3.axisLeft(yArea).ticks(10);
 const g = svg.append("g").attr("id","mainG").attr("transform", `translate(${margin.left},${margin.top})`);
 const gArea = svg.append("g").attr("id","areaG").attr("transform", `translate(${margin.left},${margin.top})`);
 const gImage = svg.append("g");
-let gText = svg.append("g").attr("id", "text").raise()
+const gText = svg.append("g").attr("id", "text").raise()
 const gMap = svg.append("g");
+const gAnnotations = svg.append("g").attr("id","annotationsG").attr("transform", `translate(${margin.left},${margin.top})`);
+
 
 
 //IMAGE
@@ -169,7 +173,7 @@ gImage.append("image")
     .attr("width", "100%")
     .attr("height", "100%")
     .attr("preserveAspectRatio", "xMidYMid meet")
-    .style("opacity",0)
+    .style("opacity",1)
 
 
 // MAP
@@ -247,58 +251,70 @@ gMap.selectAll("text.mapTextVal")
 
 
 // PIE
-const radius = Math.min(width, height) / 3;
-const pieData = [{"category":"domestic","value":91},{"category":"international","value":9}]
-const pieColorScale = d3.scaleOrdinal().domain(["domestic","international"]).range(["#496f9c","#7da9c9"]);
-const pie = d3.pie()
-  .value(d=> d.value)
+// const radius = Math.min(width, height) / 3;
+// const pieData = [{"category":"domestic","value":91},{"category":"international","value":9}]
+// const pieColorScale = d3.scaleOrdinal().domain(["domestic","international"]).range(["#496f9c","#7da9c9"]);
+// const pie = d3.pie()
+//   .value(d=> d.value)
+//
+// const arcGenerator = d3
+//     .arc()
+//     .outerRadius(radius / 2)
+//     .innerRadius(0);
+//
+// const pieDataProcessed= pie(pieData).map(d => {
+//     return {
+//       data: d.data,
+//       path: arcGenerator.startAngle(d.startAngle).endAngle(d.endAngle)(),
+//       fill: pieColorScale(d.data.category),
+//       centroid: arcGenerator.centroidd,
+//     };
+//   });
+//
+//   gMap.append("g").attr("id","pieG")
+//     .attr("transform",`translate(${SACentroid[0]+100},${SACentroid[1]-30})`)
+//     .selectAll("path.slice")
+//     .data(pieDataProcessed)
+//     .join("path")
+//     .attr("class", "slice")
+//     .attr("id", (d, i) => `slice_${i}`)
+//     .attr("d", d => d.path)
+//     .attr("fill", d => d.fill)
+//     .style("opacity",0)
+//
+//   gMap.select("#pieG")
+//     .append("text")
+//     .attr("id","pieText")
+//     .attr("x",-10)
+//     .attr("y",30)
+//     .attr("fill","white")
+//     .style("font-weight",700)
+//     .style("font-size",18)
+//     .text("91%")
+//     .style("opacity",0)
 
-const arcGenerator = d3
-    .arc()
-    .outerRadius(radius / 2)
-    .innerRadius(0);
 
-const pieDataProcessed= pie(pieData).map(d => {
-    return {
-      data: d.data,
-      path: arcGenerator.startAngle(d.startAngle).endAngle(d.endAngle)(),
-      fill: pieColorScale(d.data.category),
-      centroid: arcGenerator.centroidd,
-    };
-  });
-
-  gMap.append("g").attr("id","pieG")
-    .attr("transform",`translate(${SACentroid[0]+100},${SACentroid[1]-30})`)
-    .selectAll("path.slice")
-    .data(pieDataProcessed)
-    .join("path")
-    .attr("class", "slice")
-    .attr("id", (d, i) => `slice_${i}`)
-    .attr("d", d => d.path)
-    .attr("fill", d => d.fill)
+gMap.append("image")
+    .attr("id", "waffle")
+    .attr("xlink:href", "./img/waffle.png") // Replace with your image URL
+    .attr("x", width/2+100)
+    .attr("y", height/3+50)
+    .attr("width", 200)
+    .attr("height", 200)
+    .attr("preserveAspectRatio", "xMidYMid meet")
     .style("opacity",0)
-
-  gMap.select("#pieG")
-    .append("text")
-    .attr("id","pieText")
-    .attr("x",-10)
-    .attr("y",30)
-    .attr("fill","white")
-    .style("font-weight",700)
-    .style("font-size",18)
-    .text("91%")
-    .style("opacity",0)
-
 
 //AXES
     g.append("g")
         .attr("class", "y-axis axis")
         .call(yAxis)
+        .style("opacity",0)
 
     g.append("g")
         .attr("class", "x-axis axis")
         .attr("transform", `translate(0,${height})`)
         .call(xAxis)
+        .style("opacity",0)
 
     g.selectAll(".x-axis").selectAll(".tick").selectAll("text").style("font-size",16)
 
@@ -306,8 +322,38 @@ const pieDataProcessed= pie(pieData).map(d => {
         .attr("id","unit")
         .attr("x",0)
         .attr("y",y(0)+20)
-        .text("(In billion p.a.)")
+        .text("R billion p.a.")
         .style("opacity",0)
+
+        gAnnotations
+           .append("text")
+           .attr("class","annotationText")
+           .attr("x", x("NDC by 2030") + x.bandwidth() / 2 + margin.left+30)
+           .attr("y", y((404)/2+131))
+           .text("Investment Gap")
+           .style("font-weight",700)
+           .attr("fill","#e9c67f")
+           .style("opacity", 0)
+
+         gAnnotations
+             .append("text")
+             .attr("class","annotationText")
+            .attr("x", x("NDC by 2030") + x.bandwidth() / 2 + margin.left+30)
+            .attr("y", y((131)/2))
+            .text("Tracked")
+            .style("font-weight",700)
+            .attr("fill","#496f9c")
+            .style("opacity", 0)
+
+        gAnnotations
+            .append("text")
+            .attr("class","annotationText")
+           .attr("x", x("NDC by 2030") + x.bandwidth() / 2 + margin.left+30)
+           .attr("y", y(404+131)-3)
+           .text("Annual Estimated Needs")
+           .style("font-weight",700)
+           .style("opacity", 0)
+
 
 // DRAW AREA
 
@@ -381,7 +427,7 @@ function drawBars(){
 }
 
 
-drawBars()
+// drawBars()
 
 
 function drawBars2(){
@@ -394,6 +440,9 @@ function drawBars2(){
       .duration(300)
       .attr("height", d => y(d[0]) - y(d[1])) // Animate the height
       .attr("y", d => y(d[1])) // Animate y to the correct position
+      .style("stroke-dasharray", ("3, 3"))
+      .attr("stroke","black")
+      .attr("stroke-wdith",2)
       .on("end", function() {
           gText.selectAll("text.needs")
               .data(needsData)
@@ -407,35 +456,23 @@ function drawBars2(){
               .style("font-size",20)
               .style("font-weight",700)
               .attr("fill","white")
+
+            gText.selectAll("text.needs2")
+                  .data(needsData)
+                  .join("text")
+                  .attr("class", "needs2")
+                  .attr("x", d => x(d.category) + x.bandwidth() / 2 + margin.left)
+                  .attr("y", d => y(d.total)+margin.top-3)
+                  .attr("text-anchor", "middle")
+                  .text(d => d.total)
+                  .style("opacity", (curIndex===0 || curIndex===1)? 1:0)
+                  .style("font-size",20)
+                  .style("font-weight",700)
+                  .attr("fill","black")
       })
 }
 
 
-function drawAnnotations(){
-
-  annotationsCalled = true;
-  g.append("g").attr("id","annotationsG")
-    .selectAll("line.annotations")
-    .data(needsData)
-    .join("line")
-    .attr("class","annotations")
-    .attr("x1", d => x(d.category) + x.bandwidth() / 2 + margin.left+15)
-    .attr("x2", d => x(d.category) + x.bandwidth() / 2 + margin.left+15)
-    .attr("y1", d => y(131))
-    .attr("y2", d => y(d.value+131))
-    .style("stroke-dasharray", ("3, 3"))
-    .attr("stroke","black")
-    .attr("stroke-wdith",2)
-    .style("opacity", 1)
-
-   g.select("#annotationsG")
-      .append("text")
-      .attr("x", x("NDC") + x.bandwidth() / 2 + margin.left+30)
-      .attr("y", y((404)/2+131))
-      .text("needs")
-      .attr("id","annotationText")
-      .style("opacity", 1)
-}
 
 function changeBars(opacity){
   g.selectAll("rect").style("opacity", opacity)
@@ -467,21 +504,41 @@ let curIndex = 0;
 // scrollama event handlers
 function handleStepEnter(response) {
 
-    if (response.index == 0) {
+    if (response.index == 0) { // sankey
       curIndex = 0;
-
         if (response.direction == "down") {
 
-          changeBars(1)
-          gImage.select("#sankey").style("opacity", 0)
+            changeArea(0)
+            changeBars(0)
 
+        }
 
-            if(!annotationsCalled){
-              drawAnnotations();
-            }
+        if(response.direction=="up"){
+          gImage.select("#sankey")
+              .transition()
+              .duration(300)
+              .style("opacity", 1)
 
-            g.selectAll(".annotations").style("opacity",1)
-            g.select("#annotationText").style("opacity",1)
+          d3.select("#text").selectAll("text").style("opacity", 0)
+          gAnnotations.selectAll("text").style("opacity", 0)
+
+              changeArea(0)
+              changeBars(0)
+        }
+    }
+
+    if (response.index == 1) {
+      curIndex = 1;
+        if (response.direction == "down") {
+
+           gImage.select("#sankey")
+               .transition()
+               .duration(300)
+               .style("opacity", 0)
+
+           drawBars();
+           changeBars(1)
+           gAnnotations.selectAll("text").style("opacity", 0)
 
         }
 
@@ -495,17 +552,17 @@ function handleStepEnter(response) {
               .attr("y", d => y(d[0]))
 
 
-          g.selectAll("text.needs").style("opacity", 0)
-          g.selectAll(".annotations").style("opacity",1)
-          g.select("#annotationText").style("opacity",1)
+          d3.select("#text").selectAll("text.needs").style("opacity", 0)
+          d3.select("#text").selectAll("text.needs2").style("opacity", 0)
+          gAnnotations.selectAll("text").style("opacity", 0)
 
         }
 
     }
 
 
-    if (response.index == 1) {
-      curIndex = 1;
+    if (response.index == 2) {
+      curIndex = 2;
 
         if (response.direction == "down") {
 
@@ -514,17 +571,18 @@ function handleStepEnter(response) {
             }
 
             drawBars2()
-            if(isSmallScreen){
               setTimeout(function() {
                 gText.selectAll("text.needs").style("opacity",1).raise()
+                gText.selectAll("text.needs2").style("opacity", 1)
               }, 350);
-            }
+
+
+
 
             changeBars(1)
 
             gImage.select("#sankey").style("opacity", 0)
-            g.select("#annotationText").style("opacity",0)
-            g.selectAll(".annotations").style("opacity",0)
+            gAnnotations.selectAll("text").style("opacity", 1)
 
         }
 
@@ -538,8 +596,8 @@ function handleStepEnter(response) {
           gArea.selectAll("text").style("opacity", 0)
           g.selectAll(".tick text").style("opacity", 1)
           g.select("#unit").style("opacity", isSmallScreen?0:1)
-          g.selectAll(".annotations").style("opacity",0)
-          g.select("#annotationText").style("opacity",0)
+          g.selectAll(".annotationText").style("opacity",0)
+          gMap.select("#waffle").style("opacity",0)
 
           changeBars(1)
           removeMap()
@@ -548,8 +606,8 @@ function handleStepEnter(response) {
 
     }
 
-    if (response.index == 2) {
-      curIndex = 2;
+    if (response.index == 3) {
+      curIndex = 3;
 
         if (response.direction == "down") {
           if(!barCalled){
@@ -562,16 +620,16 @@ function handleStepEnter(response) {
 
 
           g.selectAll("text").style("opacity", 1)
+          gText.selectAll("text.needs2").style("opacity", 0)
 
-          g.selectAll(".annotations").style("opacity",0)
-          g.select("#annotationText").style("opacity",0)
+          gAnnotations.selectAll("text").style("opacity", 0)
+          // gMap.selectAll(".slice").style("opacity",1)
+          // gMap.select("#pieText").style("opacity",1)
+          gMap.select("#waffle").style("opacity",1)
 
-          gMap.selectAll(".slice").style("opacity",1)
-          gMap.select("#pieText").style("opacity",1)
 
           gMap.selectAll(".land").transition().duration(300).style("opacity",1)
           gMap.selectAll(".SA").style("opacity",1)
-          gMap.select("#pieG").style("opacity",1)
           gMap.selectAll(".mapText").style("opacity",0)
 
           changeBars(0)
@@ -584,18 +642,18 @@ function handleStepEnter(response) {
             gMap.selectAll(".mapPoints").style("opacity",0)
             gMap.selectAll(".mapText").style("opacity",0)
             gMap.selectAll(".mapTextVal").style("opacity",0)
-            gMap.select("#pieG").style("opacity",1)
-            gMap.select("#pieText").style("opacity",1)
-            gMap.selectAll(".slice").style("opacity",1)
+            gMap.select("#waffle").style("opacity",1)
+            // gMap.select("#pieText").style("opacity",1)
+            // gMap.selectAll(".slice").style("opacity",1)
 
-            g.select("#annotationText").style("opacity", 0)
+            gAnnotations.selectAll("text").style("opacity", 0)
 
         }
     }
 
 
-    if (response.index == 3) { //map with circles
-      curIndex = 3;
+    if (response.index == 4) { //map with circles
+      curIndex = 4;
 
         if (response.direction == "down") {
           if(!barCalled){
@@ -608,8 +666,9 @@ function handleStepEnter(response) {
 
           gMap.selectAll(".land").style("opacity",1)
           gMap.selectAll(".SA").style("opacity",0)
-          gMap.selectAll(".slice").style("opacity",0)
-          gMap.select("#pieText").style("opacity",0)
+          gMap.select("#waffle").style("opacity",0)
+          // gMap.selectAll(".slice").style("opacity",0)
+          // gMap.select("#pieText").style("opacity",0)
           gMap.selectAll(".mapPoints").attr("r",0).transition().duration(500).style("opacity",1).attr("r",d=>circleScale(d.value))
           svg.selectAll("text").style("opacity",0)
           gMap.selectAll(".mapText").transition().duration(300).style("opacity",windowWidth <= 750?0:1)
@@ -627,7 +686,7 @@ function handleStepEnter(response) {
           gMap.selectAll(".mapText").style("opacity",isSmallScreen?0:1)
           gMap.selectAll(".mapTextVal").style("opacity",1)
           gMap.selectAll(".land").style("opacity",1)
-          g.select("#annotationText").style("opacity",0)
+          gAnnotations.selectAll("text").style("opacity", 0)
           g.select("#unit").style("opacity", 0)
 
           changeArea(0)
@@ -635,8 +694,8 @@ function handleStepEnter(response) {
         }
     }
 
-    if (response.index == 4) { //area
-      curIndex = 4;
+    if (response.index == 5) { //area
+      curIndex = 5;
 
       if(!barCalled){
         drawBars()
@@ -646,19 +705,23 @@ function handleStepEnter(response) {
         drawBars2()
       }
 
+      gImage.select("#sankey").style("opacity", 0)
+
 
       gArea.selectAll(".area").remove();
       gArea.append("path")
             .attr("class","area")
             .datum(areaData)
-            .attr("fill", "#75436a")
+            .attr("fill", "#ac90a4")
+            .attr("stroke", "#6d4669")
+            .attr("stroke-width", 2)
             .attr("d", d3.area()
                 .x(d => xArea(d.year))
                 .y0(yArea(0))
                 .y1(yArea(0))
             )
             .transition() // Animate the transition
-            .duration(300)
+            .duration(500)
             .attr("d", areaGenerator)
             .style("opacity",1)
             .on("end", function() {
@@ -667,7 +730,7 @@ function handleStepEnter(response) {
                     .join("text")
                     .attr("class","area")
                     .attr("x",(d,i)=>i===3?xArea(d.year)-10:xArea(d.year))
-                    .attr("y",d=>yArea(d.value))
+                    .attr("y",d=>yArea(d.value)-4)
                     .text(d=>d.value)
                     .attr("fill","black")
                     .style("opacity",1)
@@ -695,20 +758,7 @@ function handleStepEnter(response) {
     }
 
 
-    if (response.index == 5) { // sankey
-      curIndex = 5;
-        if (response.direction == "down") {
 
-            changeArea(0)
-            changeBars(0)
-
-            gImage.select("#sankey")
-                .transition()
-                .duration(300)
-                .style("opacity", 1)
-
-        }
-    }
 
 }
 
