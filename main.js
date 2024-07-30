@@ -730,7 +730,7 @@ function handleStepEnter(response) {
                     .join("text")
                     .attr("class","area")
                     .attr("x",(d,i)=>i===3?xArea(d.year)-10:xArea(d.year))
-                    .attr("y",d=>yArea(d.value)-4)
+                    .attr("y",d=>yArea(d.value)-6)
                     .text(d=>d.value)
                     .attr("fill","black")
                     .style("opacity",1)
