@@ -133,7 +133,7 @@ body {
 	padding: 5px 20px;
 	background-color: hsla(0, 0%, 100%, .65);
 	box-shadow: 1px 1px 5px -3px rgba(0, 0, 0, .5);
-	text-align: justify;
+	text-align: left;
 }
 
 
