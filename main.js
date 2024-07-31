@@ -13,7 +13,7 @@ $(window).resize(function () {
 
 let isSmallScreen = false;
 
-if (windowWidth <= 550) {
+if (windowWidth <= 750) {
   isSmallScreen = true;
 }
 
@@ -27,20 +27,27 @@ const step = d3.selectAll(".scene");
 // initialize the scrollama
 const scroller = scrollama();
 
+if(windowWidth <= 950){
+    $(".article-wrapper.scroller-text").css("margin","auto");
+}else{
+    $(".article-wrapper.scroller-text").css("margin","auto");
+    $(".article-wrapper.scroller-text").css("margin-right","60%");
+}
 
 // console.log(figure.node().getBoundingClientRect())
 let width = figure.node().getBoundingClientRect().width;
 let height = figure.node().getBoundingClientRect().height;
 
 
+
 let margin = {
     "top": 35,
-    "left": 55,
+    "left": 60,
     "bottom": 65,
     "right": 30
 }
 
-if (windowWidth <= 550) {
+if (windowWidth <= 700) {
      margin = {
         "top": 15,
         "left": 35,
@@ -52,13 +59,6 @@ if (windowWidth <= 550) {
 
 //svg
 const svg = d3.select("#chart1").append("svg").attr("width", width + margin.left + margin.right).attr("height", height + margin.top + margin.bottom);
-const bg = svg.append('rect')
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .attr("x", 0)
-    .attr("y", 0)
-    .attr("fill", "none")
-    .attr("opacity", 0.3)
 
 const texture = textures
     .lines()
@@ -175,9 +175,9 @@ gImage.append("image")
     .attr("id", "sankey")
     .style("opacity", 1)
     .attr("xlink:href", "./img/sankey.png") // Replace with your image URL
-    .attr("x", 0)
+    .attr("x", isSmallScreen?"5%":0)
     .attr("y", 0)
-    .attr("width", "100%")
+    .attr("width", isSmallScreen?"90%":"100%")
     .attr("height", "100%")
     .attr("preserveAspectRatio", "xMidYMid meet")
     .style("opacity",1)
@@ -260,7 +260,15 @@ gMap.selectAll("text.mapTextVal")
 gMap.append("image")
     .attr("id", "waffle")
     .attr("xlink:href", "./img/waffle.png") // Replace with your image URL
-    .attr("x", width/2+100)
+    .attr("x", function(){
+      if(windowWidth <= 550){
+        return width/2+35
+      }
+      if(windowWidth <= 770){
+        return width/2+50
+      }
+      return width/2+100
+    })
     .attr("y", height/3+50)
     .attr("width", 200)
     .attr("height", 200)
@@ -288,6 +296,33 @@ g.append("text")
     .text("R billion p.a.")
     .style("opacity",0)
 
+
+//wrap text
+const wrap = (text, width) => {
+    text.each(function () {
+        var text = d3.select(this),
+            words = text.text().split(/\s+/).reverse(),
+            word,
+            line = [],
+            lineNumber = 0, //<-- 0!
+            lineHeight = 1.1, // ems
+            x = text.attr("x"), //<-- include the x!
+            y = text.attr("y"),
+            dy = text.attr("dy") ? text.attr("dy") : 0; //<-- null check
+        tspan = text.text(null).append("tspan").attr("x", x).attr("y", y).attr("dy", dy + "em");
+        while (word = words.pop()) {
+            line.push(word);
+            tspan.text(line.join(" "));
+            if (tspan.node().getComputedTextLength() > width) {
+                line.pop();
+                tspan.text(line.join(" "));
+                line = [word];
+                tspan = text.append("tspan").attr("x", x).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+            }
+        }
+    });
+}
+
 gAnnotations
    .append("text")
    .attr("class","annotationText")
@@ -297,6 +332,7 @@ gAnnotations
    .style("font-weight",700)
    .attr("fill","#e9c67f")
    .style("opacity", 0)
+   .call(wrap, windowWidth <= 900?100:300);
 
  gAnnotations
      .append("text")
@@ -316,6 +352,7 @@ gAnnotations
     .text("Annual Estimated Needs")
     .style("font-weight",700)
     .style("opacity", 0)
+    .call(wrap, windowWidth <= 900?100:300);
 
 
 // DRAW AREA
@@ -346,7 +383,7 @@ let annotationsCalled = false;
 
 function drawBars(){
   barCalled = true;
-  g.select("#unit").style("opacity", isSmallScreen?0:1)
+  g.select("#unit").style("opacity", windowWidth <= 650?0:1)
   g.append("g")
       .selectAll("g.rects")
       .data(series)
@@ -395,7 +432,7 @@ function drawBars(){
 function drawBars2(){
 
   bar2Called = true;
-  g.select("#unit").style("opacity", isSmallScreen?0:1)
+  g.select("#unit").style("opacity", windowWidth <= 650?0:1)
   g.selectAll(`.layer-needs .bar`)
       .attr("y", d => y(d[0])) // Set y to the base of the previous stack
       .transition()
@@ -441,7 +478,7 @@ function changeBars(opacity){
   g.selectAll("rect").style("opacity", opacity)
   g.select(".x-axis").style("opacity",opacity)
   g.select(".y-axis").style("opacity",opacity)
-  g.select("#unit").style("opacity", opacity)
+  g.select("#unit").style("opacity", windowWidth <= 650?0:opacity)
 }
 
 function changeArea(opacity){
@@ -461,6 +498,8 @@ function removeMap(){
   gMap.select("#pieText").style("opacity",0)
 
 }
+
+
 
 let curIndex = 0;
 
@@ -550,7 +589,7 @@ function handleStepEnter(response) {
           svg.selectAll("text").style("opacity", 1)
           gArea.selectAll("text").style("opacity", 0)
           g.selectAll(".tick text").style("opacity", 1)
-          g.select("#unit").style("opacity", isSmallScreen?0:1)
+          g.select("#unit").style("opacity", windowWidth <= 650?0:1)
           g.selectAll(".annotationText").style("opacity",0)
           gMap.select("#waffle").style("opacity",0)
 
