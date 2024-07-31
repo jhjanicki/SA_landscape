@@ -27,14 +27,6 @@ const step = d3.selectAll(".scene");
 // initialize the scrollama
 const scroller = scrollama();
 
-if(windowWidth <= 950){
-    $(".article-wrapper.scroller-text").css("margin","auto");
-}else{
-    $(".article-wrapper.scroller-text").css("margin","auto");
-    $(".article-wrapper.scroller-text").css("margin-right","60%");
-}
-
-// console.log(figure.node().getBoundingClientRect())
 let width = figure.node().getBoundingClientRect().width;
 let height = figure.node().getBoundingClientRect().height;
 
