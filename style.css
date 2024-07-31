@@ -101,7 +101,7 @@ body {
 }
 
 
-/* 
+/*
   .scroll-graphic .chart-wrapper .chart {
   	height: 85vh
   } */
@@ -226,12 +226,16 @@ body {
 	}
 }
 
-@media only screen and (max-width:660px) {
+@media only screen and (max-width:1050px) {
+	.scroll-graphic{
+		width:90%;
+		margin-left:5%;
+	}
+}
+
+@media only screen and (max-width:700px) {
 	.scroll-graphic{
 		width:80%;
 		margin-left:5%;
 	}
-
 }
-
-
