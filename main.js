@@ -186,6 +186,7 @@ function loadJSON(filePath) {
             }
         }
 
+
 const worldmap = loadJSON("./data/land.geojson");
 const SAMap = loadJSON("./data/south-africa.geojson");
 
@@ -280,12 +281,13 @@ g.append("g")
 
 g.selectAll(".x-axis").selectAll(".tick").selectAll("text").style("font-size",16)
 
-g.append("text")
-    .attr("id","unit")
-    .attr("x",0)
-    .attr("y",y(0)+20)
-    .text("R billion p.a.")
-    .style("opacity",0)
+
+//g.append("text")
+//    .attr("id","unit")
+//    .attr("x",0)
+//    .attr("y",y(0)+20)
+//    .text("R billion p.a.")
+//    .style("opacity",0)
 
 
 //wrap text
@@ -338,7 +340,7 @@ gAnnotations
 gAnnotations
     .append("text")
     .attr("class","annotationText")
-    .attr("x", x("NDC by 2030") + x.bandwidth() / 2 + margin.left+30)
+    .attr("x", x("NDC by 2030") + x.bandwidth() / 2 + margin.left+20)
     .attr("y", y(404+131)-3)
     .text("Annual Estimated Needs")
     .style("font-weight",700)
@@ -411,7 +413,7 @@ function drawBars(){
               .style("font-size",20)
               .style("font-weight",700)
               .attr("fill","white")
-              .style("opacity", (curIndex===0 || curIndex===1)? 1:0)
+              .style("opacity", (curIndex===1 || curIndex===2)? 1:0)
 
       })
 }
@@ -510,16 +512,101 @@ function handleStepEnter(response) {
               .duration(300)
               .style("opacity", 1)
 
-          d3.select("#text").selectAll("text").style("opacity", 0)
-          gAnnotations.selectAll("text").style("opacity", 0)
               changeArea(0)
               changeBars(0)
+
+          d3.select("#text").selectAll("text").style("opacity", 0)
+          gAnnotations.selectAll("text").style("opacity", 0)
+          gArea.selectAll(".area").style("opacity",0)
+
         }
     }
 
-    if (response.index == 1) {
-        curIndex = 1;
+    if (response.index == 1) { //area
+      curIndex = 1;
+
+      gImage.select("#sankey").style("opacity", 0)
+
+      gArea.selectAll(".area").remove();
+      gArea.append("path")
+            .attr("class","area")
+            .datum(areaData)
+            .attr("fill", "#ac90a4")
+            .attr("stroke", "#6d4669")
+            .attr("stroke-width", 2)
+            .attr("d", d3.area()
+                .x(d => xArea(d.year))
+                .y0(yArea(0))
+                .y1(yArea(0))
+            )
+            .transition() // Animate the transition
+            .duration(400)
+            .attr("d", areaGenerator)
+            .style("opacity",1)
+            .on("end", function() {
+              if(curIndex === 1){
+                gArea.selectAll("text.area")
+                      .data(areaData)
+                      .join("text")
+                      .attr("class","area")
+                      .attr("x",(d,i)=>i===3?xArea(d.year)-30:xArea(d.year))
+                      .attr("y",d=>yArea(d.value)-20)
+                      .text(d=>d.value)
+                      .attr("fill","#272727")
+                      .style("opacity",1)
+                      .style("font-weight",700)
+
+                gArea.selectAll("circle.area")
+                      .data(areaData)
+                      .join("circle")
+                      .attr("class","area")
+                      .attr("cx",d=>xArea(d.year))
+                      .attr("cy",d=>yArea(d.value))
+                      .attr("r",5)
+                      .text(d=>d.value)
+                      .attr("fill","#6d4669")
+                      .style("opacity",1)
+                      .style("font-weight",700)
+              }else{
+                gArea.selectAll(".area").style("opacity",0)
+              }
+            })
+
+
+
         if (response.direction == "down") {
+
+          svg.selectAll("text").style("opacity",0)
+          gArea.selectAll(".area").style("opacity",0)
+
+          removeMap()
+          changeBars(0)
+          changeArea(1)
+          gText.selectAll("text.current").style("opacity", 0)
+
+
+
+        }
+
+        if (response.direction == "up") {
+          console.log("1 up")
+          gImage.select("#sankey").style("opacity", 0)
+          gAnnotations.selectAll("text").style("opacity", 0)
+          removeMap()
+          changeArea(1)
+          changeBars(0)
+          gText.selectAll("text.current").style("opacity", 0)
+            // g.select(".y-axis").style("opacity",0)
+            // g.select(".x-axis path").style("opacity",0)
+            // g.selectAll(".tick text").style("opacity", 0)
+
+        }
+    }
+
+    if (response.index == 2) {
+        curIndex = 2;
+        if (response.direction == "down") {
+
 
            gImage.select("#sankey")
                .transition()
@@ -528,7 +615,16 @@ function handleStepEnter(response) {
 
            drawBars();
            changeBars(1)
+           changeArea(0)
+           gText.selectAll("text.current").style("opacity", 1)
+
+           gArea.selectAll(".area").style("opacity",0)
+
            gAnnotations.selectAll("text").style("opacity", 0)
+           //g.select(".y-axis").style("opacity",0)
+           g.select(".x-axis path").style("opacity",1)
+           g.selectAll(".tick text").style("opacity", 1)
+
 
         }
 
@@ -545,13 +641,17 @@ function handleStepEnter(response) {
           d3.select("#text").selectAll("text.needs2").style("opacity", 0)
           gAnnotations.selectAll("text").style("opacity", 0)
 
+        //  g.select(".y-axis").style("opacity",0)
+        //  g.select(".x-axis path").style("opacity",0)
+        //  g.selectAll(".tick text").style("opacity", 0)
+
         }
 
     }
 
 
-    if (response.index == 2) {
-        curIndex = 2;
+    if (response.index == 3) {
+        curIndex = 3;
         if (response.direction == "down") {
 
             if(!barCalled){
@@ -561,13 +661,19 @@ function handleStepEnter(response) {
             drawBars2()
               setTimeout(function() {
                 gText.selectAll("text.needs").style("opacity",1).raise()
-                gText.selectAll("text.needs2").style("opacity", 1)
+                if(curIndex===3){
+                  gText.selectAll("text.needs2").style("opacity", 1)
+                }
               }, 350);
 
             changeBars(1)
 
             gImage.select("#sankey").style("opacity", 0)
             gAnnotations.selectAll("text").style("opacity", 1)
+            gArea.selectAll(".area").style("opacity",0)
+          //  g.select(".y-axis").style("opacity",0)
+          //  g.select(".x-axis path").style("opacity",0)
+            g.selectAll(".tick text").style("opacity", 1)
 
         }
 
@@ -587,12 +693,13 @@ function handleStepEnter(response) {
           changeBars(1)
           removeMap()
 
+
         }
 
     }
 
-    if (response.index == 3) {
-      curIndex = 3;
+    if (response.index == 4) {
+      curIndex = 4;
 
         if (response.direction == "down") {
           if(!barCalled){
@@ -633,8 +740,8 @@ function handleStepEnter(response) {
     }
 
 
-    if (response.index == 4) { //map with circles
-      curIndex = 4;
+    if (response.index == 5) { //map with circles
+      curIndex = 5;
 
         if (response.direction == "down") {
           if(!barCalled){
@@ -673,84 +780,6 @@ function handleStepEnter(response) {
 
         }
     }
-
-    if (response.index == 5) { //area
-      curIndex = 5;
-
-      if(!barCalled){
-        drawBars()
-      }
-
-      if(!bar2Called){
-        drawBars2()
-      }
-
-      gImage.select("#sankey").style("opacity", 0)
-
-
-      gArea.selectAll(".area").remove();
-      gArea.append("path")
-            .attr("class","area")
-            .datum(areaData)
-            .attr("fill", "#ac90a4")
-            .attr("stroke", "#6d4669")
-            .attr("stroke-width", 2)
-            .attr("d", d3.area()
-                .x(d => xArea(d.year))
-                .y0(yArea(0))
-                .y1(yArea(0))
-            )
-            .transition() // Animate the transition
-            .duration(500)
-            .attr("d", areaGenerator)
-            .style("opacity",1)
-            .on("end", function() {
-              gArea.selectAll("text.area")
-                    .data(areaData)
-                    .join("text")
-                    .attr("class","area")
-                    .attr("x",(d,i)=>i===3?xArea(d.year)-10:xArea(d.year))
-                    .attr("y",d=>yArea(d.value)-6)
-                    .text(d=>d.value)
-                    .attr("fill","black")
-                    .style("opacity",1)
-                    .style("font-weight",700)
-
-              gArea.selectAll("circle.area")
-                    .data(areaData)
-                    .join("circle")
-                    .attr("class","area")
-                    .attr("cx",d=>xArea(d.year))
-                    .attr("cy",d=>yArea(d.value))
-                    .attr("r",5)
-                    .text(d=>d.value)
-                    .attr("fill","black")
-                    .style("opacity",1)
-                    .style("font-weight",700)
-            })
-
-
-
-        if (response.direction == "down") {
-
-          svg.selectAll("text").style("opacity",0)
-          gArea.selectAll(".area").style("opacity",0)
-          removeMap()
-          changeBars(0)
-          changeArea(1)
-
-
-        }
-
-        if (response.direction == "up") {
-          gImage.select("#sankey").style("opacity", 0)
-          removeMap()
-          changeArea(1)
-
-        }
-    }
-
-
 
 
 }
