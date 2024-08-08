@@ -589,16 +589,12 @@ function handleStepEnter(response) {
         }
 
         if (response.direction == "up") {
-          console.log("1 up")
           gImage.select("#sankey").style("opacity", 0)
           gAnnotations.selectAll("text").style("opacity", 0)
           removeMap()
           changeArea(1)
           changeBars(0)
           gText.selectAll("text.current").style("opacity", 0)
-            // g.select(".y-axis").style("opacity",0)
-            // g.select(".x-axis path").style("opacity",0)
-            // g.selectAll(".tick text").style("opacity", 0)
 
         }
     }
@@ -781,11 +777,8 @@ function handleStepEnter(response) {
         }
     }
 
-
 }
 
-
-function handleStepExit(response) {}
 
 function init() {
 
